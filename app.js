@@ -240,8 +240,8 @@
         ctx.strokeStyle = 'rgba(239, 68, 68, 0.45)';
         ctx.lineWidth = 1.6;
       } else {
-        ctx.strokeStyle = 'rgba(6, 182, 212, 0.12)';
-        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = 'rgba(230, 203, 178, 0.16)';
+        ctx.lineWidth = 0.9;
       }
       ctx.stroke();
 
@@ -251,10 +251,10 @@
         const px = src.x + (tgt.x - src.x) * t;
         const py = src.y + (tgt.y - src.y) * t;
         ctx.beginPath();
-        ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+        ctx.arc(px, py, 2.8, 0, Math.PI * 2);
         ctx.fillStyle = '#fff';
         ctx.shadowColor = '#ef4444';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 10;
         ctx.fill();
         ctx.shadowBlur = 0;
       }
@@ -276,7 +276,7 @@
         ctx.arc(n.x, n.y, drawRadius, 0, Math.PI * 2);
         ctx.fillStyle = isRingActive ? '#ef4444' : '#dc2626';
         ctx.shadowColor = '#ef4444';
-        ctx.shadowBlur = isRingActive ? 16 : 8;
+        ctx.shadowBlur = isRingActive ? 18 : 9;
         ctx.fill();
         ctx.shadowBlur = 0;
 
@@ -284,23 +284,34 @@
         if (isRingActive) {
           ctx.beginPath();
           ctx.arc(n.x, n.y, drawRadius + 6 + pulse, 0, Math.PI * 2);
-          ctx.strokeStyle = 'rgba(239, 68, 68, 0.35)';
-          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+          ctx.lineWidth = 1.4;
           ctx.stroke();
         }
       } else if (n.isHub) {
-        // Amber Hub
+        // Amber Hub (Skeuomorphic Sphere)
+        const radGrad = ctx.createRadialGradient(n.x - 2, n.y - 2, 0, n.x, n.y, drawRadius);
+        radGrad.addColorStop(0, '#fffbeb');
+        radGrad.addColorStop(0.5, '#f59e0b');
+        radGrad.addColorStop(1, '#92400e');
         ctx.arc(n.x, n.y, drawRadius, 0, Math.PI * 2);
-        ctx.fillStyle = '#f59e0b';
+        ctx.fillStyle = radGrad;
         ctx.shadowColor = '#f59e0b';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 10;
         ctx.fill();
         ctx.shadowBlur = 0;
       } else {
-        // Normal Safe Node
+        // Normal Safe Node (Tactile Warm Beige & Obsidian Pearl)
+        const radGrad = ctx.createRadialGradient(n.x - 1, n.y - 1, 0, n.x, n.y, drawRadius);
+        radGrad.addColorStop(0, '#fcfaf6');
+        radGrad.addColorStop(0.4, '#dfb892');
+        radGrad.addColorStop(1, '#78532f');
         ctx.arc(n.x, n.y, drawRadius, 0, Math.PI * 2);
-        ctx.fillStyle = '#06b6d4';
+        ctx.fillStyle = radGrad;
+        ctx.shadowColor = 'rgba(230, 203, 178, 0.35)';
+        ctx.shadowBlur = 5;
         ctx.fill();
+        ctx.shadowBlur = 0;
       }
 
       // Selection indicator
@@ -552,7 +563,7 @@
         </div>
         <div class="stage-details">
           <span>P99 SLA Guaranteed</span>
-          <span style="color:${s.highlight ? 'var(--cyber-teal)' : 'var(--safe-emerald)'};">
+          <span style="color:${s.highlight ? 'var(--beige-champagne)' : 'var(--safe-mint)'};">
             ${s.highlight ? '★ Core Machine Learning Scoring Budget (<200 ms)' : '✓ Within Micro-budget'}
           </span>
         </div>
@@ -647,7 +658,7 @@
     ctx.clearRect(0, 0, w, h);
 
     // Draw Grid Lines
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.strokeStyle = 'rgba(230, 203, 178, 0.08)';
     ctx.lineWidth = 1;
     for (let y = 30; y < h; y += 35) {
       ctx.beginPath();
@@ -656,7 +667,7 @@
       ctx.stroke();
     }
 
-    // 1. Draw Genuine User Natural Gaussian Curve (Teal)
+    // 1. Draw Genuine User Natural Gaussian Curve (Warm Beige)
     ctx.beginPath();
     ctx.moveTo(30, h - 30);
     for (let x = 30; x < w - 30; x += 4) {
@@ -665,23 +676,23 @@
       const y = (h - 30) - Math.exp(-Math.pow(x - mean, 2) / (2 * sigma * sigma)) * 120;
       ctx.lineTo(x, y);
     }
-    ctx.strokeStyle = '#06b6d4';
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#dfb892';
+    ctx.lineWidth = 2.8;
     ctx.stroke();
 
-    // 2. Draw Bot / Emulated Rigid Impulse Spike (Crimson)
+    // 2. Draw Bot / Emulated Rigid Impulse Spike (Ruby Red)
     ctx.beginPath();
     ctx.moveTo(w * 0.72 - 30, h - 30);
     ctx.lineTo(w * 0.72, 35);
     ctx.lineTo(w * 0.72 + 30, h - 30);
     ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2.8;
     ctx.stroke();
 
     // Labels
-    ctx.fillStyle = '#06b6d4';
-    ctx.font = '11px JetBrains Mono';
-    ctx.fillText('Genuine Human (Fluid Gaussian)', 40, 45);
+    ctx.fillStyle = '#dfb892';
+    ctx.font = '11.5px JetBrains Mono';
+    ctx.fillText('Genuine Human (Warm Gaussian)', 40, 45);
 
     ctx.fillStyle = '#ef4444';
     ctx.fillText('Bot Script (Zero Variance Spike)', w * 0.58, 25);
@@ -696,27 +707,27 @@
 
     ctx.clearRect(0, 0, w, h);
 
-    // 1. Genuine Human Curved Arc (Teal)
+    // 1. Genuine Human Curved Arc (Warm Beige Champagne)
     ctx.beginPath();
     ctx.moveTo(40, h - 40);
     ctx.quadraticCurveTo(w * 0.5, 30, w - 50, h - 60);
-    ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#dfb892';
+    ctx.lineWidth = 3.2;
     ctx.stroke();
 
-    // 2. Bot / Remote Emulated Straight Vector (Crimson)
+    // 2. Bot / Remote Emulated Straight Vector (Ruby Red)
     ctx.beginPath();
     ctx.moveTo(40, h - 50);
     ctx.lineTo(w - 50, 45);
     ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.2;
     ctx.setLineDash([6, 6]);
     ctx.stroke();
     ctx.setLineDash([]);
 
     // Labels
-    ctx.fillStyle = '#10b981';
-    ctx.font = '11px JetBrains Mono';
+    ctx.fillStyle = '#dfb892';
+    ctx.font = '11.5px JetBrains Mono';
     ctx.fillText('Natural Thumb Arc (96% Match)', 45, h - 20);
 
     ctx.fillStyle = '#ef4444';
