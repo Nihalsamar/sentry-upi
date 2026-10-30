@@ -1,0 +1,24 @@
+{
+  "name": "sentry-upi",
+  "version": "1.0.0",
+  "description": "SENTRY UPI: Real-Time Fraud Detection Engine for High-Volume UPI Payments before Settlement using Graph Neural Networks and Behavioral Biometrics",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "fintech",
+    "upi",
+    "fraud-detection",
+    "graph-neural-networks",
+    "gnn",
+    "behavioral-biometrics",
+    "security-operations-center"
+  ],
+  "author": "Nihalsamar",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

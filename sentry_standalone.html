@@ -1,0 +1,3767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SENTRY UPI — Real-Time Pre-Settlement Fraud Prevention & GNN Intelligence</title>
+  <meta name="description" content="Decide in milliseconds. See the whole network. Real-time Graph Neural Network fraud detection for high-volume UPI and digital payments before settlement.">
+  <style>
+/* ==========================================================================
+   SENTRY UPI — SOC Design System Stylesheet
+   Theme: Defense-Grade Operations Center (Obsidian, Carbon, Cyber Teal, Crimson)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+:root {
+  /* Surfaces */
+  --bg-void: #050608;
+  --bg-carbon: #0A0C11;
+  --bg-surface: #0F121A;
+  --bg-surface-elevated: #151A25;
+  --bg-surface-hover: #1C2230;
+  --bg-glass: rgba(15, 18, 26, 0.85);
+  
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.15);
+  --border-focus: rgba(6, 182, 212, 0.5);
+  
+  /* Accent Tokens */
+  --risk-crimson: #EF4444;
+  --risk-crimson-bg: rgba(239, 68, 68, 0.12);
+  --risk-crimson-glow: rgba(239, 68, 68, 0.35);
+  
+  --warn-amber: #F59E0B;
+  --warn-amber-bg: rgba(245, 158, 11, 0.12);
+  --warn-amber-glow: rgba(245, 158, 11, 0.3);
+  
+  --safe-emerald: #10B981;
+  --safe-emerald-bg: rgba(16, 185, 129, 0.12);
+  --safe-emerald-glow: rgba(16, 185, 129, 0.25);
+  
+  --cyber-teal: #06B6D4;
+  --cyber-teal-bg: rgba(6, 182, 212, 0.12);
+  --cyber-teal-glow: rgba(6, 182, 212, 0.3);
+
+  /* Typography Colors */
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-dim: #334155;
+  
+  /* Fonts */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  /* Layout */
+  --max-width: 1400px;
+  --header-height: 68px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  
+  /* Easing */
+  --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-drawer: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Reset & Box Sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 0%, #0d121e 0%, var(--bg-void) 55%);
+  overflow-x: hidden;
+  color: var(--text-primary);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-carbon);
+}
+::-webkit-scrollbar-thumb {
+  background: #252e42;
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3b4763;
+}
+
+/* Typography Helpers */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' on, 'zero' on;
+}
+
+/* Utility Containers */
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.section-padding {
+  padding: 80px 0;
+  position: relative;
+}
+
+/* Top Navigation Bar */
+.top-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: rgba(8, 10, 15, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.brand-logo-icon {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--cyber-teal), #0284c7);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px var(--cyber-teal-glow);
+}
+
+.brand-logo-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: #fff;
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brand-tag {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--cyber-teal);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  list-style: none;
+}
+
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--safe-emerald);
+}
+
+.status-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--safe-emerald);
+  box-shadow: 0 0 8px var(--safe-emerald);
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.cmd-btn {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.cmd-btn:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+.kbd-shortcut {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+}
+
+/* ==========================================================================
+   Section 1: Hero & Real-Time Metrics Banner
+   ========================================================================== */
+.hero-section {
+  padding-top: calc(var(--header-height) + 40px);
+  padding-bottom: 60px;
+  position: relative;
+}
+
+.hero-header {
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto 48px auto;
+}
+
+.hero-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  color: var(--cyber-teal);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  margin-bottom: 20px;
+}
+
+.hero-title {
+  font-size: clamp(34px, 5.2vw, 56px);
+  line-height: 1.1;
+  margin-bottom: 18px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.hero-title .highlight-text {
+  background: linear-gradient(135deg, #ffffff 40%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-tagline {
+  font-size: clamp(16px, 2.2vw, 20px);
+  color: var(--text-secondary);
+  max-width: 720px;
+  margin: 0 auto 32px auto;
+  line-height: 1.5;
+}
+
+/* Fact Badges Row */
+.fact-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.fact-badge {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fact-badge strong {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.fact-badge.highlight-teal {
+  border-color: rgba(6, 182, 212, 0.35);
+  background: rgba(6, 182, 212, 0.08);
+  color: var(--cyber-teal);
+}
+
+.fact-badge.highlight-crimson {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+}
+
+/* Key Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.metric-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.metric-card:hover {
+  border-color: var(--border-medium);
+  transform: translateY(-2px);
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.4), transparent);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.metric-label {
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+.metric-icon {
+  color: var(--text-muted);
+}
+
+.metric-value {
+  font-size: 26px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.metric-sub {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sub-tag-good {
+  color: var(--safe-emerald);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+/* Live Stream Container */
+.stream-wrapper {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+.stream-toolbar {
+  background: var(--bg-carbon);
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.stream-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stream-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stream-live-indicator {
+  width: 8px;
+  height: 8px;
+  background: var(--safe-emerald);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--safe-emerald);
+  animation: pulse-dot 1.5s infinite;
+}
+
+.stream-filter-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-btn {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-btn:hover, .filter-btn.active {
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--cyber-teal);
+  border-color: rgba(6, 182, 212, 0.4);
+}
+
+.stream-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.action-btn {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.action-btn:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-medium);
+}
+
+.action-btn-danger {
+  background: var(--risk-crimson-bg);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+.action-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: var(--risk-crimson);
+  color: #fff;
+}
+
+.stream-table-container {
+  max-height: 380px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.stream-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12.5px;
+}
+
+.stream-table th {
+  background: var(--bg-surface-elevated);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.stream-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  vertical-align: middle;
+}
+
+.stream-row {
+  transition: background 0.15s ease;
+  animation: slide-row-in 0.3s ease-out;
+}
+
+.stream-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+}
+
+.stream-row.row-fraud {
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.stream-row.row-fraud:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+@keyframes slide-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.decision-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.decision-badge.badge-approve {
+  background: var(--safe-emerald-bg);
+  color: var(--safe-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.decision-badge.badge-step-up {
+  background: var(--warn-amber-bg);
+  color: var(--warn-amber);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.decision-badge.badge-block {
+  background: var(--risk-crimson-bg);
+  color: var(--risk-crimson);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 10px var(--risk-crimson-glow);
+}
+
+.latency-ticker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.latency-ticker.good {
+  color: var(--safe-emerald);
+}
+
+.latency-ticker.warn {
+  color: var(--warn-amber);
+}
+
+.latency-ticker.danger {
+  color: var(--risk-crimson);
+}
+
+/* ==========================================================================
+   Section 2: Live Decision Pipeline & Latency Waterfall
+   ========================================================================== */
+.pipeline-section {
+  background: var(--bg-carbon);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.section-header {
+  margin-bottom: 40px;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--cyber-teal);
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.section-title {
+  font-size: clamp(24px, 3.2vw, 36px);
+  margin-bottom: 12px;
+}
+
+.section-desc {
+  color: var(--text-secondary);
+  max-width: 760px;
+  font-size: 14.5px;
+}
+
+.budget-callout-box {
+  background: rgba(6, 182, 212, 0.06);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-left: 4px solid var(--cyber-teal);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.budget-callout-text {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.budget-callout-text strong {
+  color: var(--text-primary);
+}
+
+.budget-pills {
+  display: flex;
+  gap: 10px;
+}
+
+.budget-pill {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+.budget-pill.active-limit {
+  border-color: rgba(6, 182, 212, 0.4);
+  color: var(--cyber-teal);
+}
+
+.pipeline-waterfall {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.stage-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stage-card:hover {
+  border-color: var(--border-medium);
+  background: var(--bg-surface-hover);
+}
+
+.stage-card.is-scoring {
+  border-color: rgba(6, 182, 212, 0.4);
+  background: rgba(6, 182, 212, 0.04);
+}
+
+.stage-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.stage-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stage-step-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--cyber-teal);
+  background: rgba(6, 182, 212, 0.12);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stage-badge-budget {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--cyber-teal);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.stage-latency-read {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stage-bar-bg {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.stage-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, var(--cyber-teal));
+  border-radius: var(--radius-full);
+  transition: width 0.6s var(--ease-snappy);
+}
+
+.stage-bar-fill.highlight-score {
+  background: linear-gradient(90deg, #06b6d4, #38bdf8);
+}
+
+.stage-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.total-summary-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.total-summary-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.total-summary-metric {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--safe-emerald);
+}
+
+/* ==========================================================================
+   Section 3: Fraud Graph View (MAIN HERO INTERACTION)
+   ========================================================================== */
+.graph-section {
+  position: relative;
+  background: var(--bg-void);
+}
+
+.graph-viewport-container {
+  position: relative;
+  width: 100%;
+  height: 640px;
+  background: radial-gradient(circle at 50% 50%, #0d121c 0%, #06070a 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+#graphCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+#graphCanvas:active {
+  cursor: grabbing;
+}
+
+/* Floating Controls Overlay */
+.graph-hud-controls {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 20;
+}
+
+.hud-group {
+  background: rgba(11, 14, 20, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.hud-btn {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hud-btn:hover, .hud-btn.active {
+  background: var(--cyber-teal-bg);
+  color: var(--cyber-teal);
+  border-color: rgba(6, 182, 212, 0.4);
+}
+
+.hud-btn.active-ring-1 {
+  background: var(--risk-crimson-bg);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.graph-legend-overlay {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  background: rgba(11, 14, 20, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  z-index: 20;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.legit {
+  background: var(--cyber-teal);
+  box-shadow: 0 0 6px var(--cyber-teal-glow);
+}
+
+.legend-dot.mule {
+  background: var(--risk-crimson);
+  box-shadow: 0 0 8px var(--risk-crimson);
+}
+
+.legend-dot.hub {
+  background: #f59e0b;
+}
+
+/* Tooltip on Canvas Hover */
+#graphTooltip {
+  position: absolute;
+  display: none;
+  background: rgba(15, 18, 26, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+  pointer-events: none;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
+/* Slide-in Investigation Drawer (21st.dev Drawer Pattern) */
+.investigation-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(440px, 92vw);
+  background: rgba(10, 12, 17, 0.96);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid var(--border-subtle);
+  box-shadow: -12px 0 36px rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  transform: translateX(100%);
+  transition: transform 0.35s var(--ease-drawer);
+  display: flex;
+  flex-direction: column;
+}
+
+.investigation-drawer.open {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawer-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.drawer-badge {
+  background: var(--risk-crimson-bg);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: var(--risk-crimson);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.drawer-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.drawer-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.drawer-close-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-elevated);
+}
+
+.drawer-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ring-summary-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.ring-metric-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 12px;
+}
+
+.ring-metric-row:last-child {
+  border-bottom: none;
+}
+
+.ring-metric-label {
+  color: var(--text-secondary);
+}
+
+.ring-metric-val {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ring-metric-val.risk {
+  color: var(--risk-crimson);
+}
+
+.vpa-list-container {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.vpa-list-header {
+  padding: 10px 14px;
+  background: var(--bg-surface-elevated);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.vpa-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+.vpa-item:last-child {
+  border-bottom: none;
+}
+
+.vpa-address {
+  color: var(--text-primary);
+}
+
+.drawer-footer {
+  padding: 18px 24px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-carbon);
+}
+
+.interdict-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: #fff;
+  border: none;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 16px var(--risk-crimson-glow);
+  transition: all 0.15s ease;
+}
+
+.interdict-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Section 4: Fraud Score Explainer (SHAP Attribution)
+   ========================================================================== */
+.explainer-section {
+  background: var(--bg-carbon);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.explainer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.txn-profile-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.txn-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.txn-score-gauge {
+  text-align: center;
+  padding: 20px;
+  background: var(--bg-surface-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: 20px;
+}
+
+.score-number {
+  font-size: 48px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--risk-crimson);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.score-badge {
+  display: inline-block;
+  background: var(--risk-crimson-bg);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: var(--risk-crimson);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.shap-chart-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.shap-bars-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.shap-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shap-bar-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.shap-feature-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.shap-delta {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.shap-delta.risk {
+  color: var(--risk-crimson);
+}
+
+.shap-delta.safe {
+  color: var(--safe-emerald);
+}
+
+.shap-bar-track {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.shap-bar-val {
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.shap-bar-val.risk {
+  background: linear-gradient(90deg, #f87171, var(--risk-crimson));
+}
+
+.shap-bar-val.safe {
+  background: linear-gradient(90deg, #34d399, var(--safe-emerald));
+}
+
+/* ==========================================================================
+   Section 5: Behavioral Biometrics Lab
+   ========================================================================== */
+.biometrics-section {
+  background: var(--bg-void);
+}
+
+.biometrics-dual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.bio-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.bio-canvas-wrap {
+  width: 100%;
+  height: 200px;
+  background: var(--bg-carbon);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.bio-canvas-wrap canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.bio-meta-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+/* Interactive Sandbox Area */
+.bio-tester-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.tester-input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tester-input {
+  background: var(--bg-carbon);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.tester-input:focus {
+  border-color: var(--cyber-teal);
+  box-shadow: 0 0 12px var(--cyber-teal-glow);
+}
+
+.tester-result-meter {
+  background: var(--bg-carbon);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  text-align: center;
+}
+
+.match-pct-val {
+  font-size: 38px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--safe-emerald);
+}
+
+/* ==========================================================================
+   Section 6: Imbalanced Data & Performance Panel
+   ========================================================================== */
+.imbalance-section {
+  background: var(--bg-carbon);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.slider-container-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 28px;
+}
+
+.slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.threshold-readout {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--cyber-teal);
+}
+
+.custom-slider {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--cyber-teal);
+  box-shadow: 0 0 14px var(--cyber-teal-glow);
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+
+.tradeoff-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.tradeoff-stat-box {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.tradeoff-stat-label {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.tradeoff-stat-num {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   Section 7: Final CTA & Integration Console
+   ========================================================================== */
+.cta-section {
+  background: var(--bg-void);
+  padding-bottom: 100px;
+}
+
+.cta-box {
+  background: radial-gradient(circle at 50% 0%, #152238 0%, var(--bg-surface) 80%);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 60px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.cta-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyber-teal), transparent);
+}
+
+.cta-title {
+  font-size: clamp(28px, 4vw, 44px);
+  margin-bottom: 16px;
+}
+
+.cta-desc {
+  color: var(--text-secondary);
+  max-width: 650px;
+  margin: 0 auto 36px auto;
+  font-size: 15px;
+}
+
+.cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #0284c7, var(--cyber-teal));
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 14px 28px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 20px var(--cyber-teal-glow);
+  transition: all 0.15s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px var(--cyber-teal-glow);
+}
+
+.secondary-btn {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 14px;
+  padding: 14px 28px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.secondary-btn:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-focus);
+}
+
+/* Footer */
+.site-footer {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-carbon);
+  padding: 40px 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Command Palette Modal (21st.dev Command Palette) */
+.cmd-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+}
+
+.cmd-modal-backdrop.open {
+  display: flex;
+}
+
+.cmd-palette-card {
+  width: min(580px, 94vw);
+  background: var(--bg-carbon);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  animation: cmd-scale-in 0.2s var(--ease-snappy);
+}
+
+@keyframes cmd-scale-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.cmd-search-wrap {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cmd-search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: var(--font-sans);
+}
+
+.cmd-results-list {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 8px;
+  list-style: none;
+}
+
+.cmd-item {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.1s ease;
+}
+
+.cmd-item:hover, .cmd-item.selected {
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+}
+
+.cmd-item-shortcut {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Responsive Rules */
+@media (max-width: 992px) {
+  .explainer-grid, .biometrics-dual-grid, .bio-tester-panel {
+    grid-template-columns: 1fr;
+  }
+  .nav-links {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .graph-viewport-container {
+    height: 480px;
+  }
+  .investigation-drawer {
+    width: 100vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+</style>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2306b6d4'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z'/></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <div class="container nav-inner">
+      <a href="#" class="brand-wrapper">
+        <div class="brand-logo-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+          </svg>
+        </div>
+        <div class="brand-title">
+          SENTRY <span style="color:var(--cyber-teal);">UPI</span>
+          <span class="brand-tag">SOC v3.4</span>
+        </div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#stream-section" class="nav-link">Live Stream</a></li>
+          <li><a href="#pipeline-section" class="nav-link">Decision Pipeline</a></li>
+          <li><a href="#graph-section" class="nav-link">Fraud Graph</a></li>
+          <li><a href="#explainer-section" class="nav-link">SHAP Explainer</a></li>
+          <li><a href="#biometrics-section" class="nav-link">Biometrics Lab</a></li>
+          <li><a href="#imbalance-section" class="nav-link">PR-AUC Tradeoff</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="status-pill">
+          <span class="status-pulse"></span>
+          <span>NPCI GATEWAY: 342ms</span>
+        </div>
+        <button class="cmd-btn" onclick="toggleCommandPalette(true)" aria-label="Open Command Palette">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span class="kbd-shortcut">Ctrl+K</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       SECTION 1: HERO & REAL-TIME TRANSACTION STREAM
+       ======================================================================== -->
+  <section class="hero-section" id="stream-section">
+    <div class="container">
+      <div class="hero-header">
+        <div class="hero-badge-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2v2h-2zm0-10h2v8h-2z"/>
+          </svg>
+          NPCI Pre-Settlement Interdiction Layer
+        </div>
+        <h1 class="hero-title">
+          Decide in milliseconds.<br>
+          <span class="highlight-text">See the whole network.</span>
+        </h1>
+        <p class="hero-tagline">
+          Real-time Graph Neural Network fraud detection engineered for high-volume UPI transactions. Stops mule rings and account takeover before settlement happens.
+        </p>
+
+        <!-- Critical Fact Badges -->
+        <div class="fact-badges">
+          <div class="fact-badge highlight-teal">
+            <span>⚡ Model Scoring:</span>
+            <strong>&lt; 200 ms</strong>
+          </div>
+          <div class="fact-badge highlight-teal">
+            <span>⏱️ End-to-End Decision:</span>
+            <strong>&lt; 500 ms Budget</strong>
+          </div>
+          <div class="fact-badge">
+            <span>🕸️ Relational AI:</span>
+            <strong>Heterogeneous GNN</strong>
+          </div>
+          <div class="fact-badge">
+            <span>👆 Behavioral Biometrics:</span>
+            <strong>Typing & Swipe Dynamics</strong>
+          </div>
+          <div class="fact-badge highlight-crimson">
+            <span>⚖️ Imbalanced Scale:</span>
+            <strong>0.5% Fraud in 450M Txns/day</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Metrics Stat Tiles -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">24h Monitored Volume</span>
+            <span class="metric-icon">₹</span>
+          </div>
+          <div class="metric-value">₹4,829.4 Cr</div>
+          <div class="metric-sub">
+            <span class="sub-tag-good">↑ 14.2%</span> vs last cycle
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Avg GNN Model Scoring</span>
+            <span class="metric-icon">⚡</span>
+          </div>
+          <div class="metric-value">164 ms</div>
+          <div class="metric-sub">
+            <span class="sub-tag-good">✓ 18% under</span> 200 ms budget
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">End-to-End Decision</span>
+            <span class="metric-icon">⏱️</span>
+          </div>
+          <div class="metric-value">338 ms</div>
+          <div class="metric-sub">
+            <span class="sub-tag-good">✓ Strict &lt; 500 ms</span> SLA
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Active Coordinated Rings</span>
+            <span class="metric-icon">🕸️</span>
+          </div>
+          <div class="metric-value" style="color:var(--risk-crimson);">3 Rings Intercepted</div>
+          <div class="metric-sub">
+            <span style="color:#f87171;">30 Mule Nodes Frozen</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Virtualized Stream Table -->
+      <div class="stream-wrapper">
+        <div class="stream-toolbar">
+          <div class="stream-toolbar-left">
+            <div class="stream-title">
+              <span class="stream-live-indicator"></span>
+              Live UPI Transaction Stream
+            </div>
+            <div class="stream-filter-pills">
+              <button class="filter-btn active" data-filter="ALL">All Transactions</button>
+              <button class="filter-btn" data-filter="FLAGGED">Suspicious Only</button>
+              <button class="filter-btn" data-filter="BLOCKED">Blocked Only</button>
+            </div>
+          </div>
+
+          <div class="stream-toolbar-right">
+            <button class="action-btn" id="streamPauseBtn">⏸ Pause</button>
+            <button class="action-btn action-btn-danger" onclick="simulateMuleAttack()">
+              ⚠️ Simulate Mule Ring Attack
+            </button>
+          </div>
+        </div>
+
+        <div class="stream-table-container">
+          <table class="stream-table">
+            <thead>
+              <tr>
+                <th>Time (UTC)</th>
+                <th>Txn ID</th>
+                <th>Sender VPA</th>
+                <th>Beneficiary VPA</th>
+                <th>Amount (INR)</th>
+                <th>Pre-Settlement Action</th>
+                <th>Total Latency</th>
+              </tr>
+            </thead>
+            <tbody id="streamTableBody">
+              <!-- Dynamically populated via app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 2: LIVE DECISION PIPELINE & WATERFALL
+       ======================================================================== -->
+  <section class="section-padding pipeline-section" id="pipeline-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Architecture & Timing Budgets</span>
+        <h2 class="section-title">The Sub-500ms Decision Waterfall</h2>
+        <p class="section-desc">
+          UPI settlement happens instantaneously. SENTRY UPI executes a 5-stage asynchronous verification pipeline, guaranteeing final interdiction before the payment clears.
+        </p>
+      </div>
+
+      <!-- Budget Callout Box -->
+      <div class="budget-callout-box">
+        <div class="budget-callout-text">
+          <strong>Timing Contract:</strong> The <strong>200 ms budget applies strictly to model scoring</strong> (GNN Graph Convolution + LightGBM Ensemble). The entire pipeline executes in <strong>&lt; 500 ms</strong>, eliminating customer wait time.
+        </div>
+        <div class="budget-pills">
+          <span class="budget-pill active-limit">Model Scoring Budget: &lt; 200 ms</span>
+          <span class="budget-pill active-limit">End-to-End SLA: &lt; 500 ms</span>
+        </div>
+      </div>
+
+      <!-- Pipeline Waterfall Visualizer -->
+      <div class="pipeline-waterfall" id="pipelineWaterfallContainer">
+        <!-- Rendered dynamically in app.js -->
+      </div>
+
+      <!-- SLA Summary Banner -->
+      <div class="total-summary-card">
+        <div>
+          <div class="total-summary-label">Total End-to-End Pipeline Latency</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+            Input payload arrival → Cryptographic signature & NPCI bank interdict instruction
+          </div>
+        </div>
+        <div class="total-summary-metric mono">
+          338 ms <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">(162 ms buffer remaining)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 3: FRAUD GRAPH VIEW (MAIN HERO INTERACTION)
+       ======================================================================== -->
+  <section class="section-padding graph-section" id="graph-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Graph Neural Network Topology</span>
+        <h2 class="section-title">Live Sender-Receiver Relational Graph</h2>
+        <p class="section-desc">
+          Traditional rules evaluate transactions in isolation. SENTRY's Relational Graph Convolutional Network (RGCN) analyzes multi-hop neighbor topology, exposing concealed mule rings, wash loops, and cloned device clusters.
+        </p>
+      </div>
+
+      <!-- Graph Viewport & Canvas -->
+      <div class="graph-viewport-container">
+        <canvas id="graphCanvas"></canvas>
+
+        <!-- Floating HUD Controls -->
+        <div class="graph-hud-controls">
+          <div class="hud-group">
+            <span class="hud-label">Investigate Rings:</span>
+            <button class="hud-btn hud-ring-btn" data-ring="RING-01" onclick="activateFraudRing('RING-01')">
+              Ring #1: Mule Fan-In (14 Accounts)
+            </button>
+            <button class="hud-btn hud-ring-btn" data-ring="RING-02" onclick="activateFraudRing('RING-02')">
+              Ring #2: Circular Wash (6 Hops)
+            </button>
+            <button class="hud-btn hud-ring-btn" data-ring="RING-03" onclick="activateFraudRing('RING-03')">
+              Ring #3: Cloned IMEI Cluster
+            </button>
+            <button class="hud-btn" onclick="deactivateFraudRing()">
+              ↺ Relax Graph
+            </button>
+          </div>
+        </div>
+
+        <!-- Legend Overlay -->
+        <div class="graph-legend-overlay">
+          <div class="legend-item">
+            <span class="legend-dot legit"></span>
+            <span>Legitimate Accounts (Cyan)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot mule"></span>
+            <span>Identified Mule Nodes (Crimson Pulse)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot hub"></span>
+            <span>Cashout Hub / Aggregator</span>
+          </div>
+        </div>
+
+        <!-- Interactive Hover Tooltip -->
+        <div id="graphTooltip"></div>
+
+        <!-- Slide-in Investigation Drawer (21st.dev Component) -->
+        <aside class="investigation-drawer" id="investigationDrawer" aria-label="Ring Investigation Inspector">
+          <div class="drawer-header">
+            <div class="drawer-title-wrap">
+              <span class="drawer-badge" id="drawerRingId">RING-01</span>
+              <div class="drawer-title" id="drawerRingName">Mule Fan-In Aggregator</div>
+            </div>
+            <button class="drawer-close-btn" onclick="deactivateFraudRing()" aria-label="Close Drawer">
+              <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div class="drawer-body">
+            <div class="ring-summary-panel">
+              <div class="ring-metric-row">
+                <span class="ring-metric-label">Composite Ring Risk:</span>
+                <span class="ring-metric-val risk" id="drawerRiskScore">0.94</span>
+              </div>
+              <div class="ring-metric-row">
+                <span class="ring-metric-label">Total Illicit Funnel:</span>
+                <span class="ring-metric-val" id="drawerTotalVolume">₹42,80,000</span>
+              </div>
+              <div class="ring-metric-row">
+                <span class="ring-metric-label">Mule Accounts Involved:</span>
+                <span class="ring-metric-val" id="drawerAccountsCount">15</span>
+              </div>
+              <div class="ring-metric-row">
+                <span class="ring-metric-label">Network Topology:</span>
+                <span class="ring-metric-val" id="drawerFanIn">14:1 Fan-In Ratio</span>
+              </div>
+              <div class="ring-metric-row">
+                <span class="ring-metric-label">Max Hop Distance:</span>
+                <span class="ring-metric-val" id="drawerHopCount">2 Hops</span>
+              </div>
+              <div class="ring-metric-row">
+                <span class="ring-metric-label">Device Cluster:</span>
+                <span class="ring-metric-val mono" id="drawerDevice" style="font-size:11px;">Bluestacks_x86</span>
+              </div>
+              <div class="ring-metric-row">
+                <span class="ring-metric-label">Temporal Window:</span>
+                <span class="ring-metric-val" id="drawerTimeWindow">18 minutes</span>
+              </div>
+            </div>
+
+            <div>
+              <h4 style="font-size:13px; margin-bottom:8px; color:var(--text-secondary);">Relational Analysis</h4>
+              <p style="font-size:12px; color:var(--text-muted); line-height:1.6;" id="drawerDescription">
+                14 mule accounts rapidly funnelling micro-transactions into 1 central collector VPA within 18 minutes, followed by immediate crypto P2P cashout.
+              </p>
+            </div>
+
+            <div class="vpa-list-container">
+              <div class="vpa-list-header">Flagged VPA Handles in Ring</div>
+              <div id="drawerVpaList">
+                <!-- Dynamically populated in app.js -->
+              </div>
+            </div>
+          </div>
+
+          <div class="drawer-footer">
+            <button class="interdict-btn" id="drawerInterdictBtn">
+              Execute Pre-Settlement Interdict (Freeze 15 VPAs)
+            </button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 4: FRAUD SCORE EXPLAINER (SHAP ATTRIBUTION)
+       ======================================================================== -->
+  <section class="section-padding explainer-section" id="explainer-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Interpretability & Explainable AI</span>
+        <h2 class="section-title">SHAP Feature & Graph Neighbor Attribution</h2>
+        <p class="section-desc">
+          Regulators and bank fraud teams require transparent decisions. Every score decomposes into additive Shapley values, highlighting exact behavioral, device, and relational risk drivers.
+        </p>
+      </div>
+
+      <div class="explainer-grid">
+        <!-- Transaction Profile Card -->
+        <div class="txn-profile-card">
+          <div class="txn-profile-header">
+            <div>
+              <span class="mono" style="font-size:11px; color:var(--text-muted);">EVALUATED TRANSACTION</span>
+              <h3 class="mono" id="explainerTxnId" style="font-size:18px;">TXN_UPI_982402941</h3>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="filter-btn active" onclick="selectShapProfile('mule_attack')">Fraud Case</button>
+              <button class="filter-btn" onclick="selectShapProfile('safe_salaried')">Legit Case</button>
+            </div>
+          </div>
+
+          <div class="txn-score-gauge">
+            <div class="score-number" id="explainerScore">0.88</div>
+            <span class="score-badge badge-block" id="explainerDecisionBadge">HIGH RISK — AUTO BLOCK</span>
+          </div>
+
+          <div class="ring-summary-panel">
+            <div class="ring-metric-row">
+              <span class="ring-metric-label">Sender VPA:</span>
+              <span class="ring-metric-val mono" id="explainerSender">mule_04_rnc@paytm</span>
+            </div>
+            <div class="ring-metric-row">
+              <span class="ring-metric-label">Beneficiary:</span>
+              <span class="ring-metric-val mono" id="explainerReceiver">collector_cashout@ybl</span>
+            </div>
+            <div class="ring-metric-row">
+              <span class="ring-metric-label">Amount:</span>
+              <span class="ring-metric-val mono" id="explainerAmount">₹48,500</span>
+            </div>
+            <div class="ring-metric-row">
+              <span class="ring-metric-label">Model Scoring Time:</span>
+              <span class="ring-metric-val mono" style="color:var(--cyber-teal);">164 ms (&lt; 200 ms)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SHAP Waterfall Bars -->
+        <div class="shap-chart-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h4 style="font-size:14px; font-weight:600;">Additive Feature Contributions</h4>
+            <div style="display:flex; gap:12px; font-size:11px; font-family:var(--font-mono);">
+              <span style="color:var(--risk-crimson);">■ Risk Drivers (+)</span>
+              <span style="color:var(--safe-emerald);">■ Protective Factors (-)</span>
+            </div>
+          </div>
+
+          <div class="shap-bars-container" id="shapBarsContainer">
+            <!-- Dynamically populated in app.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 5: BEHAVIORAL BIOMETRICS LAB
+       ======================================================================== -->
+  <section class="section-padding biometrics-section" id="biometrics-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Device Sensor & Touch Telemetry</span>
+        <h2 class="section-title">Behavioral Biometrics: Typing & Swipe Dynamics</h2>
+        <p class="section-desc">
+          Passcodes and OTPs can be stolen; human neuromuscular mechanics cannot. SENTRY measures millisecond keystroke flight/dwell variance and swipe curvature angles to detect bots and unauthorized users.
+        </p>
+      </div>
+
+      <!-- Dual Biometrics Canvases -->
+      <div class="biometrics-dual-grid">
+        <div class="bio-card">
+          <div class="bio-header">
+            <div>
+              <h4 style="font-size:14px;">Keystroke Dynamics (Dwell & Flight Times)</h4>
+              <p style="font-size:11.5px; color:var(--text-muted);">Comparing session distribution against enrolled user profile</p>
+            </div>
+            <span class="status-pill" style="border-color:rgba(6, 182, 212, 0.4); color:var(--cyber-teal);">
+              200Hz Polling
+            </span>
+          </div>
+          <div class="bio-canvas-wrap">
+            <canvas id="keystrokeCanvas"></canvas>
+          </div>
+          <div class="bio-meta-row">
+            <span>Inter-Keystroke Flight: <strong>148 ms</strong></span>
+            <span>Key Hold Dwell: <strong>84 ms</strong></span>
+            <span>Micro-Tremor: <strong>9.8 Hz</strong></span>
+          </div>
+        </div>
+
+        <div class="bio-card">
+          <div class="bio-header">
+            <div>
+              <h4 style="font-size:14px;">Swipe Dynamics & Trajectory Curvature</h4>
+              <p style="font-size:11.5px; color:var(--text-muted);">Human thumb biomechanics vs linear robotic script injection</p>
+            </div>
+            <span class="status-pill" style="border-color:rgba(239, 68, 68, 0.4); color:var(--risk-crimson);">
+              Synthetic Attack Flagged
+            </span>
+          </div>
+          <div class="bio-canvas-wrap">
+            <canvas id="swipeCanvas"></canvas>
+          </div>
+          <div class="bio-meta-row">
+            <span>Arc Curvature: <strong>0.38 rad</strong></span>
+            <span>Jerk Variance: <strong>4.2 m/s³</strong></span>
+            <span>Linear Bot Match: <strong>31.8%</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Interactive Biometrics Sandbox -->
+      <div class="bio-tester-panel">
+        <div class="tester-input-area">
+          <label style="font-size:13px; font-weight:600; color:var(--text-primary);">
+            Interactive Test: Type below to verify your natural human cadence
+          </label>
+          <input type="text" 
+                 id="biometricTestInput" 
+                 class="tester-input" 
+                 placeholder="Type your UPI PIN or quick phrase here (e.g. sentry-verify-992)" 
+                 autocomplete="off">
+          <span style="font-size:11.5px; color:var(--text-muted);">
+            SENTRY captures inter-key intervals in real-time. Natural typing produces Gaussian variance; script injections produce rigid delta peaks.
+          </span>
+        </div>
+
+        <div class="tester-result-meter">
+          <span style="font-size:11px; font-family:var(--font-mono); color:var(--text-muted); text-transform:uppercase;">
+            Calculated Biometric Match
+          </span>
+          <div class="match-pct-val" id="liveMatchPct">94%</div>
+          <span style="font-size:11.5px; color:var(--safe-emerald); font-weight:500;">
+            ✓ Human Neuromuscular Verified
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 6: IMBALANCED DATA & PERFORMANCE PANEL
+       ======================================================================== -->
+  <section class="section-padding imbalance-section" id="imbalance-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">High-Imbalance Optimization (0.5% Fraud Rate)</span>
+        <h2 class="section-title">Precision, Recall & Financial Loss Tradeoff</h2>
+        <p class="section-desc">
+          When 99.5% of transactions are legitimate, standard accuracy is misleading. SENTRY optimizes directly for <strong>PR-AUC (0.942)</strong>, giving fraud operations leaders precise control over false positives vs chargeback prevention.
+        </p>
+      </div>
+
+      <!-- Dynamic Slider Card -->
+      <div class="slider-container-card">
+        <div class="slider-header">
+          <div>
+            <span style="font-size:11px; font-family:var(--font-mono); color:var(--text-muted); text-transform:uppercase;">
+              Operational Interdict Cutoff Threshold
+            </span>
+            <div style="font-size:15px; font-weight:600; color:var(--text-primary); margin-top:2px;">
+              Tune Decision Boundary (θ) for Pre-Settlement Block
+            </div>
+          </div>
+          <div class="threshold-readout mono" id="thresholdValueDisplay">0.50</div>
+        </div>
+
+        <input type="range" 
+               id="thresholdSlider" 
+               class="custom-slider" 
+               min="0.10" 
+               max="0.90" 
+               step="0.05" 
+               value="0.50" 
+               aria-label="Threshold Cutoff Slider">
+
+        <div class="tradeoff-stats-grid">
+          <div class="tradeoff-stat-box">
+            <div class="tradeoff-stat-label">Model Precision</div>
+            <div class="tradeoff-stat-num mono" id="metricPrecision" style="color:var(--cyber-teal);">97.10%</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Low false alarms</div>
+          </div>
+
+          <div class="tradeoff-stat-box">
+            <div class="tradeoff-stat-label">Fraud Recall</div>
+            <div class="tradeoff-stat-num mono" id="metricRecall" style="color:var(--safe-emerald);">94.80%</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Stops 95% of attacks</div>
+          </div>
+
+          <div class="tradeoff-stat-box">
+            <div class="tradeoff-stat-label">False Positive Rate (FPR)</div>
+            <div class="tradeoff-stat-num mono" id="metricFpr">0.058%</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Minimal customer friction</div>
+          </div>
+
+          <div class="tradeoff-stat-box">
+            <div class="tradeoff-stat-label">Net Fraud Prevented</div>
+            <div class="tradeoff-stat-num mono" id="metricPreventedLoss" style="color:var(--safe-emerald);">₹60.8 Lakhs</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Per 100K transaction batch</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted);">
+          <span>True Positives: <strong id="metricTruePositives" style="color:#fff;">190</strong></span>
+          <span>False Positives: <strong id="metricFalsePositives" style="color:#f59e0b;">58</strong></span>
+          <span>Missed Fraud: <strong id="metricMissedFraud" style="color:#ef4444;">10</strong></span>
+          <span>Validated PR-AUC: <strong style="color:var(--cyber-teal);">0.942</strong> (ROC-AUC: 0.991)</span>
+        </div>
+      </div>
+
+      <!-- Latency SLA Distribution Percentiles -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Latency p50 (Median)</span>
+            <span class="metric-icon">✓</span>
+          </div>
+          <div class="metric-value">284 ms</div>
+          <div class="metric-sub">Across 50,000,000 txns</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Latency p95</span>
+            <span class="metric-icon">⚡</span>
+          </div>
+          <div class="metric-value">392 ms</div>
+          <div class="metric-sub">During peak festival traffic</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Latency p99 (Worst Case)</span>
+            <span class="metric-icon">⏱️</span>
+          </div>
+          <div class="metric-value">468 ms</div>
+          <div class="metric-sub">
+            <span class="sub-tag-good">✓ 100% compliant</span> with &lt; 500 ms SLA
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 7: FINAL CTA & ENTERPRISE INTEGRATION
+       ======================================================================== -->
+  <section class="section-padding cta-section" id="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <h2 class="cta-title">Deploy SENTRY UPI to Your Payment Gateway</h2>
+        <p class="cta-desc">
+          Integrates natively via high-throughput gRPC and Kafka stream connectors into NPCI UPI switches, payment aggregators, and bank core switches. Stop fraud before settlement occurs.
+        </p>
+
+        <div class="cta-actions">
+          <a href="#graph-section" class="primary-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            Explore Interactive Fraud Graph
+          </a>
+          <button class="secondary-btn" onclick="toggleCommandPalette(true)">
+            Open Security Ops Console (Ctrl+K)
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <strong>SENTRY UPI</strong> — Real-Time Graph Neural Network Pre-Settlement Fraud Interdiction.
+      </div>
+      <div class="mono" style="font-size:11px;">
+        Designed with Dark SOC Aesthetic • Sub-200ms Scoring • Sub-500ms End-to-End SLA
+      </div>
+    </div>
+  </footer>
+
+  <!-- Command Palette Modal (21st.dev Component) -->
+  <div class="cmd-modal-backdrop" id="cmdPaletteModal" role="dialog" aria-modal="true" aria-label="Command Palette">
+    <div class="cmd-palette-card">
+      <div class="cmd-search-wrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" 
+               id="cmdSearchInput" 
+               class="cmd-search-input" 
+               placeholder="Type a command or search mule rings, accounts, threshold..." 
+               autocomplete="off">
+        <span class="kbd-shortcut">ESC to close</span>
+      </div>
+      <ul class="cmd-results-list" id="cmdResultsList">
+        <!-- Rendered in app.js -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+/**
+ * SENTRY UPI — Core Data Engine & Simulated API Layer
+ * Generates realistic high-volume UPI transaction streams, relational graph topology (300 nodes),
+ * 3 hidden coordinated fraud rings, SHAP explainability weights, and behavioral biometrics profiles.
+ */
+
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    root.SentryDataEngine = factory();
+  }
+})(typeof self !== 'undefined' ? self : this, function () {
+
+  // --- Seed Data & Constants ---
+  const BANKS = ['oksbi', 'okhdfcbank', 'paytm', 'ybl', 'okaxis', 'icici', 'indus', 'kotak', 'barodampay'];
+  const FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan',
+    'Shaurya', 'Ananya', 'Diya', 'Aadhya', 'Pari', 'Saanvi', 'Myra', 'Kavya', 'Anushka', 'Riya',
+    'Rohan', 'Vikram', 'Pooja', 'Neha', 'Sunil', 'Rajesh', 'Priya', 'Amit', 'Deepak', 'Sanjay'];
+  const LAST_NAMES = ['Sharma', 'Verma', 'Patel', 'Reddy', 'Mehta', 'Nair', 'Singh', 'Deshmukh', 'Joshi', 'Gupta',
+    'Rao', 'Iyer', 'Bhat', 'Chatterjee', 'Das', 'Malhotra', 'Kapoor', 'Chauhan', 'Yadav', 'Kulkarni'];
+  const MERCHANTS = ['swiggy@icici', 'zomato@hdfc', 'flipkart@axis', 'amazon@apl', 'uber@icici', 'ola@paytm',
+    'jiomart@sbi', 'tataneu@hdfc', 'blinkit@icici', 'zepto@hdfc'];
+
+  // 3 Hidden Fraud Rings Definition
+  const FRAUD_RINGS = [
+    {
+      id: 'RING-01',
+      name: 'Mule Fan-In Aggregator',
+      type: 'fan_in',
+      riskScore: 0.94,
+      totalVolume: '₹42,80,000',
+      description: '14 mule accounts rapidly funnelling micro-transactions into 1 central collector VPA within 18 minutes, followed by immediate crypto P2P cashout.',
+      metrics: {
+        accountsCount: 15,
+        hopCount: 2,
+        fanInRatio: '14:1',
+        deviceCluster: 'Shared Emulator Fingerprint (Bluestacks_x86_ID: 9942a)',
+        timeWindow: '18 minutes',
+        avgTxnSize: '₹28,500'
+      },
+      flaggedVpas: [
+        'collector_cashout@ybl',
+        'mule_01_del@oksbi', 'mule_02_pat@oksbi', 'mule_03_lko@ybl', 'mule_04_rnc@paytm',
+        'mule_05_blr@okaxis', 'mule_06_kol@oksbi', 'mule_07_mum@icici', 'mule_08_jai@ybl',
+        'mule_09_ahm@okhdfcbank', 'mule_10_sur@oksbi', 'mule_11_nag@paytm', 'mule_12_bho@okaxis',
+        'mule_13_ind@oksbi', 'mule_14_kan@ybl'
+      ]
+    },
+    {
+      id: 'RING-02',
+      name: 'Circular Wash Network',
+      type: 'circular_wash',
+      riskScore: 0.91,
+      totalVolume: '₹18,50,000',
+      description: 'Closed-loop 6-hop circular transaction chain designed to artificially inflate account trust scores and obscure source of compromised OTP funds.',
+      metrics: {
+        accountsCount: 6,
+        hopCount: 6,
+        fanInRatio: '1:1 Circular',
+        deviceCluster: 'Distributed VPN (AS13335 Cloudflare Exit Hops)',
+        timeWindow: '42 minutes',
+        avgTxnSize: '₹45,000'
+      },
+      flaggedVpas: [
+        'wash_alpha@okaxis',
+        'wash_bravo@okhdfcbank',
+        'wash_charlie@oksbi',
+        'wash_delta@ybl',
+        'wash_echo@paytm',
+        'wash_foxtrot@icici'
+      ]
+    },
+    {
+      id: 'RING-03',
+      name: 'Cloned IMEI Device Cluster',
+      type: 'device_clone',
+      riskScore: 0.89,
+      totalVolume: '₹27,10,000',
+      description: '9 distinct user accounts transacting simultaneously from an identical cloned hardware IMEI and rooted Android operating system fingerprint.',
+      metrics: {
+        accountsCount: 9,
+        hopCount: 1,
+        fanInRatio: 'Multi-target Phishing',
+        deviceCluster: 'Hardware Hash: SHA256(IMEI:86429104882190)',
+        timeWindow: '12 minutes',
+        avgTxnSize: '₹34,000'
+      },
+      flaggedVpas: [
+        'spoof_usr1@oksbi', 'spoof_usr2@okhdfcbank', 'spoof_usr3@ybl', 'spoof_usr4@okaxis',
+        'spoof_usr5@paytm', 'spoof_usr6@icici', 'spoof_usr7@oksbi', 'spoof_usr8@ybl', 'spoof_usr9@kotak'
+      ]
+    }
+  ];
+
+  // Helper: Random generator
+  function randomBetween(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  function randomFloat(min, max, decimals = 2) {
+    return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
+  }
+  function sample(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  // --- Network Topology Generator (300+ Nodes) ---
+  function generateNetworkTopology() {
+    const nodes = [];
+    const links = [];
+    const nodeMap = new Map();
+
+    let idCounter = 1;
+
+    // 1. Generate Ring 1 Nodes (Fan-In Aggregator)
+    const ring1 = FRAUD_RINGS[0];
+    const collectorNode = {
+      id: `NODE_${String(idCounter++).padStart(4, '0')}`,
+      vpa: ring1.flaggedVpas[0],
+      name: 'P2P Crypto Cashout Hub',
+      ringId: ring1.id,
+      isMule: true,
+      isHub: true,
+      riskScore: 0.98,
+      status: 'HIGH_RISK',
+      totalTxnCount: 142,
+      balance: '₹38,20,500',
+      cluster: 1,
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0
+    };
+    nodes.push(collectorNode);
+    nodeMap.set(collectorNode.vpa, collectorNode);
+
+    for (let i = 1; i < ring1.flaggedVpas.length; i++) {
+      const vpa = ring1.flaggedVpas[i];
+      const node = {
+        id: `NODE_${String(idCounter++).padStart(4, '0')}`,
+        vpa: vpa,
+        name: `Mule Feeder #${i}`,
+        ringId: ring1.id,
+        isMule: true,
+        isHub: false,
+        riskScore: randomFloat(0.85, 0.94),
+        status: 'HIGH_RISK',
+        totalTxnCount: randomBetween(8, 25),
+        balance: `₹${randomBetween(2000, 15000)}`,
+        cluster: 1,
+        x: 0,
+        y: 0,
+        vx: 0,
+        vy: 0
+      };
+      nodes.push(node);
+      nodeMap.set(vpa, node);
+      // Link to collector
+      links.push({
+        source: node.id,
+        target: collectorNode.id,
+        volume: randomBetween(25000, 48000),
+        isFraud: true,
+        ringId: ring1.id
+      });
+    }
+
+    // 2. Generate Ring 2 Nodes (Circular Wash)
+    const ring2 = FRAUD_RINGS[1];
+    const ring2Nodes = [];
+    for (let i = 0; i < ring2.flaggedVpas.length; i++) {
+      const vpa = ring2.flaggedVpas[i];
+      const node = {
+        id: `NODE_${String(idCounter++).padStart(4, '0')}`,
+        vpa: vpa,
+        name: `Wash Layer Node ${String.fromCharCode(65 + i)}`,
+        ringId: ring2.id,
+        isMule: true,
+        isHub: false,
+        riskScore: randomFloat(0.88, 0.93),
+        status: 'HIGH_RISK',
+        totalTxnCount: randomBetween(12, 35),
+        balance: `₹${randomBetween(10000, 55000)}`,
+        cluster: 2,
+        x: 0,
+        y: 0,
+        vx: 0,
+        vy: 0
+      };
+      nodes.push(node);
+      nodeMap.set(vpa, node);
+      ring2Nodes.push(node);
+    }
+    // Connect in circular loop
+    for (let i = 0; i < ring2Nodes.length; i++) {
+      const nextIdx = (i + 1) % ring2Nodes.length;
+      links.push({
+        source: ring2Nodes[i].id,
+        target: ring2Nodes[nextIdx].id,
+        volume: randomBetween(35000, 52000),
+        isFraud: true,
+        ringId: ring2.id
+      });
+    }
+
+    // 3. Generate Ring 3 Nodes (Cloned IMEI)
+    const ring3 = FRAUD_RINGS[2];
+    const ring3Nodes = [];
+    for (let i = 0; i < ring3.flaggedVpas.length; i++) {
+      const vpa = ring3.flaggedVpas[i];
+      const node = {
+        id: `NODE_${String(idCounter++).padStart(4, '0')}`,
+        vpa: vpa,
+        name: `Cloned Victim Account #${i + 1}`,
+        ringId: ring3.id,
+        isMule: true,
+        isHub: false,
+        riskScore: randomFloat(0.82, 0.91),
+        status: 'HIGH_RISK',
+        totalTxnCount: randomBetween(5, 18),
+        balance: `₹${randomBetween(5000, 32000)}`,
+        cluster: 3,
+        x: 0,
+        y: 0,
+        vx: 0,
+        vy: 0
+      };
+      nodes.push(node);
+      nodeMap.set(vpa, node);
+      ring3Nodes.push(node);
+    }
+    // Cross links among ring 3
+    for (let i = 0; i < ring3Nodes.length - 1; i++) {
+      links.push({
+        source: ring3Nodes[i].id,
+        target: ring3Nodes[i + 1].id,
+        volume: randomBetween(20000, 42000),
+        isFraud: true,
+        ringId: ring3.id
+      });
+    }
+
+    // 4. Generate 270 Legitimate / Safe Nodes
+    const targetCount = 300;
+    while (nodes.length < targetCount) {
+      const firstName = sample(FIRST_NAMES);
+      const lastName = sample(LAST_NAMES);
+      const bank = sample(BANKS);
+      const vpa = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${randomBetween(10, 99)}@${bank}`;
+      
+      const isMerchant = Math.random() < 0.12;
+      const node = {
+        id: `NODE_${String(idCounter++).padStart(4, '0')}`,
+        vpa: isMerchant ? sample(MERCHANTS) : vpa,
+        name: isMerchant ? 'Verified Merchant' : `${firstName} ${lastName}`,
+        ringId: null,
+        isMule: false,
+        isHub: isMerchant,
+        riskScore: randomFloat(0.01, 0.18),
+        status: 'SAFE',
+        totalTxnCount: randomBetween(3, 85),
+        balance: `₹${randomBetween(1200, 95000)}`,
+        cluster: 0,
+        x: 0,
+        y: 0,
+        vx: 0,
+        vy: 0
+      };
+      nodes.push(node);
+    }
+
+    // 5. Generate Natural Transaction Links between Legitimate Nodes (Power Law Distribution)
+    for (let i = 30; i < nodes.length; i++) {
+      // Connect to 1 to 3 other random nodes
+      const connectionCount = randomBetween(1, 3);
+      for (let c = 0; c < connectionCount; c++) {
+        const targetNode = nodes[randomBetween(30, nodes.length - 1)];
+        if (targetNode.id !== nodes[i].id) {
+          links.push({
+            source: nodes[i].id,
+            target: targetNode.id,
+            volume: randomBetween(150, 4500),
+            isFraud: false,
+            ringId: null
+          });
+        }
+      }
+    }
+
+    return { nodes, links, rings: FRAUD_RINGS };
+  }
+
+  // --- Real-Time Transaction Generator ---
+  let txnSequence = 982402100;
+  function generateTransaction(forceFraud = false, ringIndex = 0) {
+    txnSequence += randomBetween(1, 4);
+    const txnId = `TXN_UPI_${txnSequence}`;
+    const timestamp = new Date().toISOString();
+
+    const isFraud = forceFraud || Math.random() < 0.005; // 0.5% fraud rate
+
+    let senderVpa, receiverVpa, amount, riskScore, decision, ringId = null;
+    let pipelineLatencies, topFeatures, biometrics;
+
+    if (isFraud) {
+      const ring = FRAUD_RINGS[ringIndex % FRAUD_RINGS.length];
+      ringId = ring.id;
+      senderVpa = sample(ring.flaggedVpas.slice(1)) || 'compromised.user88@oksbi';
+      receiverVpa = ring.flaggedVpas[0] || 'mule_aggregator@ybl';
+      amount = randomBetween(24000, 75000);
+      riskScore = randomFloat(0.86, 0.98);
+      decision = riskScore > 0.90 ? 'BLOCK' : 'STEP_UP';
+
+      pipelineLatencies = {
+        ingestion: randomBetween(28, 42),      // API Gateway & Kafka
+        features: randomBetween(75, 95),       // Redis + Feast Feature Store
+        modelScore: randomBetween(145, 185),   // GNN + XGBoost Ensemble (<200ms)
+        biometrics: randomBetween(45, 62),     // Typing & Swipe Validation
+        decision: randomBetween(18, 28)        // Arbiter & Interdict Action
+      };
+
+      topFeatures = [
+        { name: 'GNN 2-Hop Mule Network Proximity', delta: '+0.38', type: 'risk' },
+        { name: 'Device Fingerprint / Root Check Anomaly', delta: '+0.24', type: 'risk' },
+        { name: 'Velocity: 8th Txn in 180s', delta: '+0.19', type: 'risk' },
+        { name: 'Impossible Velocity Travel (Delhi->Patna 22m)', delta: '+0.12', type: 'risk' },
+        { name: 'Swipe Trajectory Curvature Deviation', delta: '+0.09', type: 'risk' },
+        { name: 'Aadhaar e-KYC Account Age (4 yrs)', delta: '-0.14', type: 'safe' }
+      ];
+
+      biometrics = {
+        matchScore: randomBetween(22, 42),
+        typingRhythmVariance: 'HIGH (Synthetic/Bot cadence)',
+        swipeAngleDeviation: '41.8° (Erratic / Emulated)',
+        flightTimeMs: 42,
+        dwellTimeMs: 18,
+        status: 'FAILED'
+      };
+    } else {
+      senderVpa = `${sample(FIRST_NAMES).toLowerCase()}.${sample(LAST_NAMES).toLowerCase()}${randomBetween(10, 99)}@${sample(BANKS)}`;
+      receiverVpa = Math.random() < 0.4 ? sample(MERCHANTS) : `${sample(FIRST_NAMES).toLowerCase()}@${sample(BANKS)}`;
+      amount = randomBetween(120, 8500);
+      riskScore = randomFloat(0.02, 0.28);
+      decision = 'APPROVE';
+
+      pipelineLatencies = {
+        ingestion: randomBetween(22, 35),
+        features: randomBetween(65, 82),
+        modelScore: randomBetween(132, 168),   // Strict <200ms budget
+        biometrics: randomBetween(38, 54),
+        decision: randomBetween(14, 22)
+      };
+
+      topFeatures = [
+        { name: 'Historic VPA Whitelist Affinity', delta: '-0.28', type: 'safe' },
+        { name: 'Device Fingerprint Consistent', delta: '-0.21', type: 'safe' },
+        { name: 'Usual Circadian Spending Window', delta: '-0.15', type: 'safe' },
+        { name: 'Low Beneficiary Volatility', delta: '-0.08', type: 'safe' }
+      ];
+
+      biometrics = {
+        matchScore: randomBetween(88, 99),
+        typingRhythmVariance: 'NORMAL (Natural Human Curve)',
+        swipeAngleDeviation: '4.2° (Standard thumb arc)',
+        flightTimeMs: 148,
+        dwellTimeMs: 84,
+        status: 'PASSED'
+      };
+    }
+
+    const totalLatency = Object.values(pipelineLatencies).reduce((a, b) => a + b, 0);
+
+    return {
+      txnId,
+      timestamp,
+      senderVpa,
+      receiverVpa,
+      amount: `₹${amount.toLocaleString('en-IN')}`,
+      rawAmount: amount,
+      isFraud,
+      riskScore,
+      decision,
+      ringId,
+      pipelineLatencies,
+      totalLatency,
+      topFeatures,
+      biometrics
+    };
+  }
+
+  // --- Behavioral Biometrics Synthesizer ---
+  function getBiometricProfiles() {
+    return {
+      genuineUser: {
+        label: 'Genuine Account Holder',
+        keystrokeCadence: [145, 162, 138, 175, 142, 158, 169, 144, 151],
+        dwellTimes: [82, 88, 79, 94, 85, 89, 91, 84, 86],
+        swipeTrajectory: [
+          { x: 40, y: 180 }, { x: 55, y: 162 }, { x: 78, y: 138 },
+          { x: 110, y: 110 }, { x: 152, y: 84 }, { x: 198, y: 68 },
+          { x: 245, y: 58 }, { x: 290, y: 54 }
+        ],
+        velocityProfile: [1.2, 1.8, 2.4, 2.9, 2.6, 2.1, 1.4, 0.8],
+        tremorHz: 9.8,
+        matchPct: 96.4
+      },
+      attackSession: {
+        label: 'Suspicious Session (Bot / Hijacked)',
+        keystrokeCadence: [45, 46, 44, 45, 45, 46, 44, 45, 45], // Unnatural machine rigidity
+        dwellTimes: [20, 20, 19, 21, 20, 20, 20, 21, 20],
+        swipeTrajectory: [
+          { x: 40, y: 180 }, { x: 80, y: 160 }, { x: 120, y: 140 },
+          { x: 160, y: 120 }, { x: 200, y: 100 }, { x: 240, y: 80 },
+          { x: 280, y: 60 } // Unnatural straight vector injection
+        ],
+        velocityProfile: [3.8, 3.8, 3.8, 3.8, 3.8, 3.8, 3.8],
+        tremorHz: 0.0, // Zero biological micro-tremor
+        matchPct: 31.8
+      }
+    };
+  }
+
+  // --- Imbalanced Data & Precision-Recall Performance Model ---
+  // Model trained on 50,000,000 UPI txns with 0.18% base fraud prevalence
+  function calculateThresholdTradeoff(threshold = 0.50) {
+    const totalTransactions = 100000;
+    const actualFraud = 200; // 0.2%
+    const actualLegit = totalTransactions - actualFraud;
+
+    // Logistic sensitivity curves for high-precision GNN model
+    // At higher threshold: Recall drops, Precision increases, FPR drops
+    const recall = Math.max(0.60, Math.min(0.99, 1 / (1 + Math.exp(5 * (threshold - 0.35)))));
+    const precision = Math.max(0.70, Math.min(0.995, 1 / (1 + Math.exp(-6 * (threshold - 0.45)))));
+    const fpr = Math.max(0.0001, Math.min(0.015, 0.008 * Math.exp(-4 * threshold)));
+
+    const truePositives = Math.round(actualFraud * recall);
+    const falseNegatives = actualFraud - truePositives; // Missed fraud
+    const falsePositives = Math.round(actualLegit * fpr);
+    const trueNegatives = actualLegit - falsePositives;
+
+    const avgFraudLoss = 32000; // ₹32,000 per unstopped fraud
+    const falsePositiveFrictionCost = 450; // ₹450 support/friction cost per blocked legit user
+
+    const fraudLossPrevented = truePositives * avgFraudLoss;
+    const missedFraudLoss = falseNegatives * avgFraudLoss;
+    const customerFrictionLoss = falsePositives * falsePositiveFrictionCost;
+
+    return {
+      threshold,
+      precision: parseFloat((precision * 100).toFixed(2)),
+      recall: parseFloat((recall * 100).toFixed(2)),
+      prAuc: 0.942,
+      rocAuc: 0.991,
+      fpr: parseFloat((fpr * 100).toFixed(3)),
+      truePositives,
+      falseNegatives,
+      falsePositives,
+      trueNegatives,
+      financials: {
+        preventedFormatted: `₹${(fraudLossPrevented / 100000).toFixed(1)} Lakhs`,
+        missedLossFormatted: `₹${(missedFraudLoss / 100000).toFixed(1)} Lakhs`,
+        frictionCostFormatted: `₹${(customerFrictionLoss / 1000).toFixed(1)}K`
+      }
+    };
+  }
+
+  return {
+    generateNetworkTopology,
+    generateTransaction,
+    getBiometricProfiles,
+    calculateThresholdTradeoff,
+    FRAUD_RINGS
+  };
+});
+
+</script>
+  <script>
+/**
+ * SENTRY UPI — Interactive Client Controller & Visualization Engine
+ * Controls: Force-Directed Graph Canvas, Live Transaction Stream, Decision Waterfall,
+ * SHAP Explainer, Behavioral Biometrics Lab, PR-AUC Threshold Slider, and Command Palette.
+ */
+
+(function () {
+  'use strict';
+
+  // --- Global Application State ---
+  const state = {
+    network: null,
+    activeRingId: null,
+    hoveredNode: null,
+    selectedNode: null,
+    streamPaused: false,
+    streamFilter: 'ALL',
+    streamTimer: null,
+    graphScale: 1.0,
+    panX: 0,
+    panY: 0,
+    isDragging: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    threshold: 0.50,
+    selectedTxnProfile: 'mule_attack',
+    activeScenarioIndex: 0
+  };
+
+  // --- Initialize Application on DOM Ready ---
+  document.addEventListener('DOMContentLoaded', () => {
+    initDataEngine();
+    initForceGraph();
+    initLiveStream();
+    initPipelineWaterfall();
+    initShapExplainer();
+    initBiometricsLab();
+    initImbalanceSlider();
+    initCommandPalette();
+    initEventListeners();
+  });
+
+  // --- 1. Data Engine Initialization ---
+  function initDataEngine() {
+    if (typeof SentryDataEngine === 'undefined') {
+      console.error('SentryDataEngine not loaded');
+      return;
+    }
+    state.network = SentryDataEngine.generateNetworkTopology();
+    console.log(`[SENTRY UPI] Topology generated: ${state.network.nodes.length} nodes, ${state.network.links.length} links.`);
+  }
+
+  // --- 2. Interactive Force-Directed Graph Engine (HTML5 Canvas) ---
+  let canvas, ctx, animFrameId;
+  const simulation = {
+    alpha: 1.0,
+    alphaMin: 0.001,
+    alphaDecay: 0.022,
+    velocityDecay: 0.72
+  };
+
+  function initForceGraph() {
+    canvas = document.getElementById('graphCanvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+
+    resizeGraphCanvas();
+    window.addEventListener('resize', resizeGraphCanvas);
+
+    // Initial node positioning in calm layout
+    const width = canvas.width;
+    const height = canvas.height;
+    state.panX = width / 2;
+    state.panY = height / 2;
+
+    const nodes = state.network.nodes;
+    nodes.forEach((node, i) => {
+      // Clustered circular distribution
+      let angle = (i / nodes.length) * Math.PI * 2;
+      let radius = 80 + Math.random() * 260;
+
+      if (node.cluster === 1) { // Ring 1
+        angle = Math.PI * 0.25 + (Math.random() - 0.5) * 0.6;
+        radius = 160 + Math.random() * 80;
+      } else if (node.cluster === 2) { // Ring 2
+        angle = Math.PI * 0.95 + (Math.random() - 0.5) * 0.5;
+        radius = 190 + Math.random() * 70;
+      } else if (node.cluster === 3) { // Ring 3
+        angle = Math.PI * 1.65 + (Math.random() - 0.5) * 0.5;
+        radius = 170 + Math.random() * 80;
+      }
+
+      node.x = Math.cos(angle) * radius;
+      node.y = Math.sin(angle) * radius;
+      node.targetX = node.x;
+      node.targetY = node.y;
+      node.vx = (Math.random() - 0.5) * 2;
+      node.vy = (Math.random() - 0.5) * 2;
+      node.radius = node.isHub ? 8 : (node.isMule ? 5.5 : 3.5);
+    });
+
+    startGraphLoop();
+    bindGraphInteractions();
+  }
+
+  function resizeGraphCanvas() {
+    if (!canvas) return;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = rect.height * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+
+  function startGraphLoop() {
+    function step() {
+      updateForcePhysics();
+      renderGraph();
+      animFrameId = requestAnimationFrame(step);
+    }
+    step();
+  }
+
+  // Organic spring physics & cluster attraction
+  function updateForcePhysics() {
+    const nodes = state.network.nodes;
+    const links = state.network.links;
+
+    // Node-Node Repulsion
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = nodes[j];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const distSq = dx * dx + dy * dy || 1;
+        if (distSq < 16000) {
+          const dist = Math.sqrt(distSq);
+          const force = (180 / distSq) * simulation.alpha;
+          const fx = (dx / dist) * force;
+          const fy = (dy / dist) * force;
+          a.vx -= fx;
+          a.vy -= fy;
+          b.vx += fx;
+          b.vy += fy;
+        }
+      }
+    }
+
+    // Link Spring Attraction
+    const nodeMap = new Map(nodes.map(n => [n.id, n]));
+    links.forEach(l => {
+      const src = nodeMap.get(l.source);
+      const tgt = nodeMap.get(l.target);
+      if (src && tgt) {
+        const dx = tgt.x - src.x;
+        const dy = tgt.y - src.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        
+        let desiredDist = l.isFraud ? 45 : 75;
+        // If ring is active and this link is part of active ring, pull tighter
+        if (state.activeRingId && l.ringId === state.activeRingId) {
+          desiredDist = 32;
+        }
+
+        const force = (dist - desiredDist) * 0.04 * simulation.alpha;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+        src.vx += fx;
+        src.vy += fy;
+        tgt.vx -= fx;
+        tgt.vy -= fy;
+      }
+    });
+
+    // Ring Clustering Attraction (When ring selected/hovered)
+    if (state.activeRingId) {
+      const ringNodes = nodes.filter(n => n.ringId === state.activeRingId);
+      if (ringNodes.length > 0) {
+        // Calculate ring centroid
+        let cx = 0, cy = 0;
+        ringNodes.forEach(n => { cx += n.x; cy += n.y; });
+        cx /= ringNodes.length;
+        cy /= ringNodes.length;
+
+        ringNodes.forEach(n => {
+          n.vx += (cx - n.x) * 0.05;
+          n.vy += (cy - n.y) * 0.05;
+        });
+      }
+    }
+
+    // Centering Gravity
+    nodes.forEach(n => {
+      n.vx -= n.x * 0.0008;
+      n.vy -= n.y * 0.0008;
+
+      n.vx *= simulation.velocityDecay;
+      n.vy *= simulation.velocityDecay;
+      n.x += n.vx;
+      n.y += n.vy;
+    });
+
+    // Decay alpha smoothly
+    if (simulation.alpha > simulation.alphaMin) {
+      simulation.alpha -= (simulation.alpha - simulation.alphaMin) * simulation.alphaDecay;
+    }
+  }
+
+  // High-performance canvas draw routine
+  let pulseTime = 0;
+  function renderGraph() {
+    pulseTime += 0.04;
+    const w = canvas.width / window.devicePixelRatio;
+    const h = canvas.height / window.devicePixelRatio;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    ctx.translate(state.panX, state.panY);
+    ctx.scale(state.graphScale, state.graphScale);
+
+    const nodes = state.network.nodes;
+    const links = state.network.links;
+    const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+    // 1. Draw Links
+    links.forEach(l => {
+      const src = nodeMap.get(l.source);
+      const tgt = nodeMap.get(l.target);
+      if (!src || !tgt) return;
+
+      const isRingActive = state.activeRingId && l.ringId === state.activeRingId;
+      ctx.beginPath();
+      ctx.moveTo(src.x, src.y);
+      ctx.lineTo(tgt.x, tgt.y);
+
+      if (isRingActive) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2.4;
+      } else if (l.isFraud) {
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.45)';
+        ctx.lineWidth = 1.6;
+      } else {
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.12)';
+        ctx.lineWidth = 0.8;
+      }
+      ctx.stroke();
+
+      // Flow particle animation for active fraud ring
+      if (isRingActive) {
+        const t = (pulseTime * 1.5 + (src.x * 0.01)) % 1;
+        const px = src.x + (tgt.x - src.x) * t;
+        const py = src.y + (tgt.y - src.y) * t;
+        ctx.beginPath();
+        ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = '#ef4444';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    });
+
+    // 2. Draw Nodes
+    nodes.forEach(n => {
+      const isRingActive = state.activeRingId && n.ringId === state.activeRingId;
+      const isHovered = state.hoveredNode === n;
+
+      ctx.beginPath();
+      let drawRadius = n.radius;
+
+      if (isRingActive || n.isMule) {
+        // Red glowing ring node
+        const pulse = Math.sin(pulseTime * 3 + n.x * 0.05) * 2;
+        drawRadius = n.radius + (isRingActive ? 2 + pulse : 0);
+
+        ctx.arc(n.x, n.y, drawRadius, 0, Math.PI * 2);
+        ctx.fillStyle = isRingActive ? '#ef4444' : '#dc2626';
+        ctx.shadowColor = '#ef4444';
+        ctx.shadowBlur = isRingActive ? 16 : 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Outer ripple aura for active ring
+        if (isRingActive) {
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, drawRadius + 6 + pulse, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(239, 68, 68, 0.35)';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+      } else if (n.isHub) {
+        // Amber Hub
+        ctx.arc(n.x, n.y, drawRadius, 0, Math.PI * 2);
+        ctx.fillStyle = '#f59e0b';
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      } else {
+        // Normal Safe Node
+        ctx.arc(n.x, n.y, drawRadius, 0, Math.PI * 2);
+        ctx.fillStyle = '#06b6d4';
+        ctx.fill();
+      }
+
+      // Selection indicator
+      if (isHovered || state.selectedNode === n) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, drawRadius + 5, 0, Math.PI * 2);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    });
+
+    ctx.restore();
+  }
+
+  // Canvas Interactions: Hover, Drag, Zoom, Click
+  function bindGraphInteractions() {
+    const tooltip = document.getElementById('graphTooltip');
+
+    canvas.addEventListener('mousedown', (e) => {
+      state.isDragging = true;
+      state.dragStartX = e.clientX - state.panX;
+      state.dragStartY = e.clientY - state.panY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (state.isDragging) {
+        state.panX = e.clientX - state.dragStartX;
+        state.panY = e.clientY - state.dragStartY;
+        return;
+      }
+
+      // Hit testing for hover
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left - state.panX) / state.graphScale;
+      const mouseY = (e.clientY - rect.top - state.panY) / state.graphScale;
+
+      let found = null;
+      for (const node of state.network.nodes) {
+        const dx = node.x - mouseX;
+        const dy = node.y - mouseY;
+        if (dx * dx + dy * dy < (node.radius + 6) * (node.radius + 6)) {
+          found = node;
+          break;
+        }
+      }
+
+      state.hoveredNode = found;
+      if (found) {
+        canvas.style.cursor = 'pointer';
+        if (tooltip) {
+          tooltip.style.display = 'block';
+          tooltip.style.left = `${e.clientX - rect.left + 16}px`;
+          tooltip.style.top = `${e.clientY - rect.top + 16}px`;
+          tooltip.innerHTML = `
+            <div style="font-weight:700; color:#fff; margin-bottom:2px;">${found.vpa}</div>
+            <div style="color:${found.isMule ? '#ef4444' : '#10b981'}; font-size:10px;">
+              ${found.isMule ? `⚠️ MULE ACCOUNT (${found.ringId || 'FLAGGED'})` : '✓ VERIFIED USER'}
+            </div>
+            <div style="color:#94a3b8; font-size:10px; margin-top:4px;">
+              Score: <strong style="color:#fff;">${found.riskScore}</strong> | Balance: ${found.balance}
+            </div>
+          `;
+        }
+      } else {
+        canvas.style.cursor = state.isDragging ? 'grabbing' : 'grab';
+        if (tooltip) tooltip.style.display = 'none';
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      state.isDragging = false;
+    });
+
+    // Zoom on wheel
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      state.graphScale = Math.max(0.4, Math.min(3.0, state.graphScale * zoomFactor));
+    }, { passive: false });
+
+    // Click on node to activate Ring
+    canvas.addEventListener('click', (e) => {
+      if (state.hoveredNode) {
+        state.selectedNode = state.hoveredNode;
+        if (state.hoveredNode.ringId) {
+          activateFraudRing(state.hoveredNode.ringId);
+        }
+      } else {
+        // Clicked outside: relax network
+        deactivateFraudRing();
+      }
+    });
+  }
+
+  // Ring Activation & Drawer Reveal
+  window.activateFraudRing = function (ringId) {
+    state.activeRingId = ringId;
+    simulation.alpha = 0.8; // Wake up physics gently
+
+    const ring = state.network.rings.find(r => r.id === ringId);
+    if (!ring) return;
+
+    // Update Drawer Content
+    const drawer = document.getElementById('investigationDrawer');
+    if (drawer) {
+      document.getElementById('drawerRingId').textContent = ring.id;
+      document.getElementById('drawerRingName').textContent = ring.name;
+      document.getElementById('drawerRiskScore').textContent = ring.riskScore;
+      document.getElementById('drawerTotalVolume').textContent = ring.totalVolume;
+      document.getElementById('drawerAccountsCount').textContent = ring.metrics.accountsCount;
+      document.getElementById('drawerHopCount').textContent = `${ring.metrics.hopCount} Hops`;
+      document.getElementById('drawerFanIn').textContent = ring.metrics.fanInRatio;
+      document.getElementById('drawerDevice').textContent = ring.metrics.deviceCluster;
+      document.getElementById('drawerTimeWindow').textContent = ring.metrics.timeWindow;
+      document.getElementById('drawerDescription').textContent = ring.description;
+
+      const vpaList = document.getElementById('drawerVpaList');
+      vpaList.innerHTML = ring.flaggedVpas.map((vpa, idx) => `
+        <div class="vpa-item">
+          <span class="vpa-address">${idx === 0 ? '👑 ' : ''}${vpa}</span>
+          <span class="badge ${idx === 0 ? 'badge-block' : 'badge-step-up'}">
+            ${idx === 0 ? 'CASHOUT HUB' : 'MULE FEEDER'}
+          </span>
+        </div>
+      `).join('');
+
+      drawer.classList.add('open');
+    }
+
+    // Highlight HUD Pill
+    document.querySelectorAll('.hud-ring-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.ring === ringId);
+    });
+  };
+
+  window.deactivateFraudRing = function () {
+    state.activeRingId = null;
+    simulation.alpha = 0.5;
+
+    const drawer = document.getElementById('investigationDrawer');
+    if (drawer) drawer.classList.remove('open');
+
+    document.querySelectorAll('.hud-ring-btn').forEach(btn => btn.classList.remove('active'));
+  };
+
+  // --- 3. Live Transaction Stream Controller ---
+  function initLiveStream() {
+    const tableBody = document.getElementById('streamTableBody');
+    if (!tableBody) return;
+
+    // Seed initial 6 rows
+    for (let i = 0; i < 6; i++) {
+      const txn = SentryDataEngine.generateTransaction();
+      prependStreamRow(txn);
+    }
+
+    // Schedule live stream ticker
+    startStreamTicker();
+  }
+
+  function startStreamTicker() {
+    if (state.streamTimer) clearInterval(state.streamTimer);
+    state.streamTimer = setInterval(() => {
+      if (state.streamPaused) return;
+      const txn = SentryDataEngine.generateTransaction();
+      if (state.streamFilter === 'FLAGGED' && !txn.isFraud) return;
+      if (state.streamFilter === 'BLOCKED' && txn.decision !== 'BLOCK') return;
+      prependStreamRow(txn);
+    }, 1100);
+  }
+
+  function prependStreamRow(txn) {
+    const tableBody = document.getElementById('streamTableBody');
+    if (!tableBody) return;
+
+    const row = document.createElement('tr');
+    row.className = `stream-row ${txn.isFraud ? 'row-fraud' : ''}`;
+    row.innerHTML = `
+      <td>${txn.timestamp.slice(11, 19)}</td>
+      <td style="color:#fff; font-weight:600;">${txn.txnId}</td>
+      <td>${txn.senderVpa}</td>
+      <td>${txn.receiverVpa}</td>
+      <td>${txn.amount}</td>
+      <td>
+        <span class="decision-badge badge-${txn.decision.toLowerCase().replace('_', '-')}">
+          ${txn.decision === 'APPROVE' ? '✓ APPROVE' : (txn.decision === 'BLOCK' ? '⛔ BLOCK' : '⚠️ STEP-UP')}
+        </span>
+      </td>
+      <td>
+        <span class="latency-ticker ${txn.totalLatency > 450 ? 'warn' : 'good'}">
+          ${txn.totalLatency} ms
+        </span>
+      </td>
+    `;
+
+    // Click row to inspect
+    row.addEventListener('click', () => {
+      inspectTransaction(txn);
+    });
+
+    tableBody.prepend(row);
+    // Keep at most 25 rows
+    while (tableBody.children.length > 25) {
+      tableBody.removeChild(tableBody.lastChild);
+    }
+  }
+
+  // Simulate Attack Action
+  window.simulateMuleAttack = function () {
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        const txn = SentryDataEngine.generateTransaction(true, 0);
+        prependStreamRow(txn);
+      }, i * 220);
+    }
+    activateFraudRing('RING-01');
+  };
+
+  // --- 4. Pipeline Latency Waterfall ---
+  function initPipelineWaterfall() {
+    // Stage elements and live latency update
+    const stages = [
+      { id: 'ingestion', label: '1. Request Ingestion (API Gateway & Kafka)', ms: 34, budget: '50 ms' },
+      { id: 'features', label: '2. Real-Time Feature Store (Redis + Feast)', ms: 82, budget: '100 ms' },
+      { id: 'modelScore', label: '3. GNN Relational + XGBoost Ensemble', ms: 164, budget: '200 ms MAX', highlight: true },
+      { id: 'biometrics', label: '4. Behavioral Biometrics (Typing/Swipe)', ms: 48, budget: '70 ms' },
+      { id: 'decision', label: '5. Rule Arbiter & Pre-Settlement Interdict', ms: 22, budget: '30 ms' }
+    ];
+
+    const container = document.getElementById('pipelineWaterfallContainer');
+    if (!container) return;
+
+    container.innerHTML = stages.map(s => `
+      <div class="stage-card ${s.highlight ? 'is-scoring' : ''}">
+        <div class="stage-top">
+          <div class="stage-name-wrap">
+            <span class="stage-step-num">${s.id === 'modelScore' ? '⚡' : '•'}</span>
+            <span class="stage-name">${s.label}</span>
+            <span class="stage-badge-budget">Budget: ${s.budget}</span>
+          </div>
+          <span class="stage-latency-read mono" id="latency_${s.id}">${s.ms} ms</span>
+        </div>
+        <div class="stage-bar-bg">
+          <div class="stage-bar-fill ${s.highlight ? 'highlight-score' : ''}" 
+               id="bar_${s.id}" 
+               style="width: ${(s.ms / 200) * 100}%;">
+          </div>
+        </div>
+        <div class="stage-details">
+          <span>P99 SLA Guaranteed</span>
+          <span style="color:${s.highlight ? 'var(--cyber-teal)' : 'var(--safe-emerald)'};">
+            ${s.highlight ? '★ Core Machine Learning Scoring Budget (<200 ms)' : '✓ Within Micro-budget'}
+          </span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // --- 5. SHAP Explainer (Feature Attribution) ---
+  function initShapExplainer() {
+    updateShapView('mule_attack');
+  }
+
+  function updateShapView(profileKey) {
+    const shapData = {
+      mule_attack: {
+        txnId: 'TXN_UPI_982402941',
+        sender: 'mule_04_rnc@paytm',
+        receiver: 'collector_cashout@ybl',
+        amount: '₹48,500',
+        score: '0.88',
+        decision: 'BLOCK',
+        features: [
+          { name: 'GNN 2-Hop Neighbor High-Risk Score', delta: '+0.38', type: 'risk', pct: 85 },
+          { name: 'Hardware Fingerprint Anomaly (Rooted Emul)', delta: '+0.24', type: 'risk', pct: 60 },
+          { name: 'Velocity: 12th Txn in 3 Minutes', delta: '+0.19', type: 'risk', pct: 48 },
+          { name: 'Impossible Velocity Travel (Mumbai->Patna 20m)', delta: '+0.12', type: 'risk', pct: 30 },
+          { name: 'Biometric Swipe Curvature Deviation', delta: '+0.09', type: 'risk', pct: 22 },
+          { name: 'Aadhaar e-KYC Tenure (4+ years)', delta: '-0.14', type: 'safe', pct: 35 }
+        ]
+      },
+      safe_salaried: {
+        txnId: 'TXN_UPI_982402850',
+        sender: 'arjun.sharma82@oksbi',
+        receiver: 'swiggy@icici',
+        amount: '₹740',
+        score: '0.04',
+        decision: 'APPROVE',
+        features: [
+          { name: 'Historic Merchant Whitelist Match', delta: '-0.32', type: 'safe', pct: 80 },
+          { name: 'Device Hardware Consistent (iPhone 15)', delta: '-0.24', type: 'safe', pct: 60 },
+          { name: 'Biometric Keystroke Cadence Match (98%)', delta: '-0.18', type: 'safe', pct: 45 },
+          { name: 'Normal Diurnal Time-of-Day Window', delta: '-0.11', type: 'safe', pct: 28 },
+          { name: 'Beneficiary Volatility Variance', delta: '+0.03', type: 'risk', pct: 8 }
+        ]
+      }
+    };
+
+    const d = shapData[profileKey] || shapData.mule_attack;
+
+    document.getElementById('explainerTxnId').textContent = d.txnId;
+    document.getElementById('explainerSender').textContent = d.sender;
+    document.getElementById('explainerReceiver').textContent = d.receiver;
+    document.getElementById('explainerAmount').textContent = d.amount;
+    document.getElementById('explainerScore').textContent = d.score;
+    document.getElementById('explainerDecisionBadge').textContent = d.decision;
+    document.getElementById('explainerDecisionBadge').className = `score-badge ${d.decision === 'BLOCK' ? 'badge-block' : 'badge-approve'}`;
+
+    const barsContainer = document.getElementById('shapBarsContainer');
+    if (!barsContainer) return;
+
+    barsContainer.innerHTML = d.features.map(f => `
+      <div class="shap-bar-row">
+        <div class="shap-bar-header">
+          <span class="shap-feature-name">${f.name}</span>
+          <span class="shap-delta ${f.type}">${f.delta}</span>
+        </div>
+        <div class="shap-bar-track">
+          <div class="shap-bar-val ${f.type}" style="width: ${f.pct}%;"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.selectShapProfile = function (key) {
+    updateShapView(key);
+  };
+
+  // --- 6. Behavioral Biometrics Lab ---
+  function initBiometricsLab() {
+    renderKeystrokeCanvas();
+    renderSwipeCanvas();
+    bindInteractiveTester();
+  }
+
+  function renderKeystrokeCanvas() {
+    const c = document.getElementById('keystrokeCanvas');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const w = c.width = c.parentElement.clientWidth;
+    const h = c.height = 200;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Draw Grid Lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let y = 30; y < h; y += 35) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+
+    // 1. Draw Genuine User Natural Gaussian Curve (Teal)
+    ctx.beginPath();
+    ctx.moveTo(30, h - 30);
+    for (let x = 30; x < w - 30; x += 4) {
+      const mean = w * 0.45;
+      const sigma = 50;
+      const y = (h - 30) - Math.exp(-Math.pow(x - mean, 2) / (2 * sigma * sigma)) * 120;
+      ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // 2. Draw Bot / Emulated Rigid Impulse Spike (Crimson)
+    ctx.beginPath();
+    ctx.moveTo(w * 0.72 - 30, h - 30);
+    ctx.lineTo(w * 0.72, 35);
+    ctx.lineTo(w * 0.72 + 30, h - 30);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = '#06b6d4';
+    ctx.font = '11px JetBrains Mono';
+    ctx.fillText('Genuine Human (Fluid Gaussian)', 40, 45);
+
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('Bot Script (Zero Variance Spike)', w * 0.58, 25);
+  }
+
+  function renderSwipeCanvas() {
+    const c = document.getElementById('swipeCanvas');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const w = c.width = c.parentElement.clientWidth;
+    const h = c.height = 200;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. Genuine Human Curved Arc (Teal)
+    ctx.beginPath();
+    ctx.moveTo(40, h - 40);
+    ctx.quadraticCurveTo(w * 0.5, 30, w - 50, h - 60);
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // 2. Bot / Remote Emulated Straight Vector (Crimson)
+    ctx.beginPath();
+    ctx.moveTo(40, h - 50);
+    ctx.lineTo(w - 50, 45);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 6]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.fillStyle = '#10b981';
+    ctx.font = '11px JetBrains Mono';
+    ctx.fillText('Natural Thumb Arc (96% Match)', 45, h - 20);
+
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('Robotic Linear Vector (31% Match)', w * 0.52, 60);
+  }
+
+  function bindInteractiveTester() {
+    const input = document.getElementById('biometricTestInput');
+    const matchVal = document.getElementById('liveMatchPct');
+    if (!input || !matchVal) return;
+
+    let keyTimes = [];
+    input.addEventListener('keydown', () => {
+      const now = performance.now();
+      keyTimes.push(now);
+      if (keyTimes.length > 5) {
+        // Calculate flight time variance
+        let diffs = [];
+        for (let i = 1; i < keyTimes.length; i++) {
+          diffs.push(keyTimes[i] - keyTimes[i - 1]);
+        }
+        const mean = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+        const variance = diffs.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / diffs.length;
+
+        // Human has moderate variance; machine has near-zero
+        let match = Math.min(99, Math.max(45, Math.round(80 + (variance > 400 ? 15 : -25))));
+        matchVal.textContent = `${match}%`;
+        matchVal.style.color = match > 75 ? 'var(--safe-emerald)' : 'var(--warn-amber)';
+      }
+    });
+  }
+
+  // --- 7. Imbalanced Data & Precision-Recall Slider ---
+  function initImbalanceSlider() {
+    const slider = document.getElementById('thresholdSlider');
+    if (!slider) return;
+
+    slider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      updateThresholdMetrics(val);
+    });
+
+    updateThresholdMetrics(0.50);
+  }
+
+  function updateThresholdMetrics(val) {
+    const metrics = SentryDataEngine.calculateThresholdTradeoff(val);
+
+    document.getElementById('thresholdValueDisplay').textContent = val.toFixed(2);
+    document.getElementById('metricPrecision').textContent = `${metrics.precision}%`;
+    document.getElementById('metricRecall').textContent = `${metrics.recall}%`;
+    document.getElementById('metricFpr').textContent = `${metrics.fpr}%`;
+    document.getElementById('metricTruePositives').textContent = metrics.truePositives;
+    document.getElementById('metricFalsePositives').textContent = metrics.falsePositives;
+    document.getElementById('metricMissedFraud').textContent = metrics.falseNegatives;
+    document.getElementById('metricPreventedLoss').textContent = metrics.financials.preventedFormatted;
+  }
+
+  // --- 8. Command Palette (21st.dev Component) ---
+  function initCommandPalette() {
+    const modal = document.getElementById('cmdPaletteModal');
+    const input = document.getElementById('cmdSearchInput');
+    const list = document.getElementById('cmdResultsList');
+    if (!modal || !input || !list) return;
+
+    window.toggleCommandPalette = function (forceOpen) {
+      const isOpen = modal.classList.contains('open');
+      if (forceOpen !== undefined ? forceOpen : !isOpen) {
+        modal.classList.add('open');
+        input.value = '';
+        input.focus();
+        renderCommandResults('');
+      } else {
+        modal.classList.remove('open');
+      }
+    };
+
+    input.addEventListener('input', (e) => {
+      renderCommandResults(e.target.value);
+    });
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) toggleCommandPalette(false);
+    });
+  }
+
+  function renderCommandResults(query) {
+    const list = document.getElementById('cmdResultsList');
+    if (!list) return;
+
+    const commands = [
+      { label: 'Inspect Ring #1: Mule Fan-In Aggregator', action: () => activateFraudRing('RING-01'), shortcut: 'R1' },
+      { label: 'Inspect Ring #2: Circular Wash Network', action: () => activateFraudRing('RING-02'), shortcut: 'R2' },
+      { label: 'Inspect Ring #3: Cloned IMEI Hardware Cluster', action: () => activateFraudRing('RING-03'), shortcut: 'R3' },
+      { label: 'Simulate Coordinated Mule Attack (Live Injection)', action: () => simulateMuleAttack(), shortcut: 'ATTACK' },
+      { label: 'Reset Graph View (Recenter & Relax)', action: () => deactivateFraudRing(), shortcut: 'ESC' },
+      { label: 'Set Decision Threshold to 0.75 (Strict Interdict)', action: () => {
+        document.getElementById('thresholdSlider').value = 0.75;
+        updateThresholdMetrics(0.75);
+      }, shortcut: 'T:75' }
+    ];
+
+    const filtered = commands.filter(c => c.label.toLowerCase().includes(query.toLowerCase()));
+    list.innerHTML = filtered.map((c, i) => `
+      <li class="cmd-item" data-idx="${i}">
+        <span>${c.label}</span>
+        <span class="cmd-item-shortcut">${c.shortcut}</span>
+      </li>
+    `).join('');
+
+    // Bind click handlers
+    list.querySelectorAll('.cmd-item').forEach((item, idx) => {
+      item.addEventListener('click', () => {
+        filtered[idx].action();
+        toggleCommandPalette(false);
+      });
+    });
+  }
+
+  // --- 9. Global Keyboard & Button Listeners ---
+  function initEventListeners() {
+    window.addEventListener('keydown', (e) => {
+      // Cmd/Ctrl + K: Command Palette
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        toggleCommandPalette();
+      }
+      // Esc: Close drawers / modals
+      if (e.key === 'Escape') {
+        toggleCommandPalette(false);
+        deactivateFraudRing();
+      }
+    });
+
+    // Stream Pause/Resume Toggle
+    const pauseBtn = document.getElementById('streamPauseBtn');
+    if (pauseBtn) {
+      pauseBtn.addEventListener('click', () => {
+        state.streamPaused = !state.streamPaused;
+        pauseBtn.textContent = state.streamPaused ? '▶ Resume Stream' : '⏸ Pause';
+      });
+    }
+
+    // Stream Filter Pills
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.streamFilter = btn.dataset.filter;
+      });
+    });
+
+    // Interdict Button
+    const interdictBtn = document.getElementById('drawerInterdictBtn');
+    if (interdictBtn) {
+      interdictBtn.addEventListener('click', () => {
+        interdictBtn.textContent = '⚡ NPCI Interdict Executed! Accounts Frozen';
+        interdictBtn.style.background = '#10b981';
+        setTimeout(() => {
+          interdictBtn.textContent = 'Execute Pre-Settlement Interdict';
+          interdictBtn.style.background = '';
+          deactivateFraudRing();
+        }, 2000);
+      });
+    }
+  }
+
+  function inspectTransaction(txn) {
+    updateShapView(txn.isFraud ? 'mule_attack' : 'safe_salaried');
+    // Scroll smoothly to explainer
+    const el = document.getElementById('explainerSection');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }
+
+})();
+
+</script>
+</body>
+</html>
